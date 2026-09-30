@@ -1,6 +1,6 @@
 package com.lpg.retail.entity;
 
-import jakarata.persistence.*;
+import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
