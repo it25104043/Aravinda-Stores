@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Repository
 public interface DeliveryEventRepository extends JpaRepository<DeliveryEvent, Long> {
     List<DeliveryEvent> findByDeliveryDeliveryId(Long deliveryId);
+
     List<DeliveryEvent> findByEventType(DeliveryEvent.EventType eventType);
+
     List<DeliveryEvent> findByEventAtBetween(LocalDateTime start, LocalDateTime end);
 }

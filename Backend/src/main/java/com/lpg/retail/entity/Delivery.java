@@ -7,36 +7,34 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "deliveries")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Delivery {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long deliveryId;
-    
     @OneToOne
     @JoinColumn(name = "order_id", nullable = false, unique = true)
     private Order order;
-    
     @ManyToOne
     @JoinColumn(name = "assigned_staff_id")
     private User assignedStaff;
-    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private DeliveryStatus status = DeliveryStatus.UNASSIGNED;
-    
     @Column
     private LocalDateTime assignedAt;
-    
     @Column
     private LocalDateTime completedAt;
-    
     @Column
+    @Builder.Default
     private BigDecimal codCollected = BigDecimal.ZERO;
-    
-    public enum DeliveryStatus { UNASSIGNED, ASSIGNED, DISPATCHED, DELIVERED, FAILED }
+
+    public enum DeliveryStatus {
+        UNASSIGNED, ASSIGNED, DISPATCHED, DELIVERED, FAILED
+    }
 }
