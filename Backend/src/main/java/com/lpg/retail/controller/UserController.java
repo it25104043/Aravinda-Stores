@@ -1,81 +1,71 @@
 package com.lpg.retail.controller;
 
-import com.lpg.retail.entity.User;
+import com.lpg.retail.dto.*;
 import com.lpg.retail.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/users")
-@CrossOrigin(originPatterns = "*")
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
+    private final UserService service;
 
-    @Autowired
-    private UserService userService;
+    @PostMapping("/me/change-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@Valid @RequestBody Requests.ChangePassword r,
+            @RequestHeader("Idempotency-Key") String key) {
+        service.changePassword(r, key);
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user) {
-        try {
-            User registered = userService.registerUser(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(registered);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    @ResponseStatus(HttpStatus.CREATED)
+    public Views.User register(@Valid @RequestBody Requests.Register r) {
+        return service.register(r);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String email = credentials.get("email");
-        String password = credentials.get("password");
-
-        try {
-            var user = userService.authenticateUser(email, password);
-            if (user.isPresent()) {
-                return ResponseEntity.ok(user.get());
-            }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public Views.Login login(@Valid @RequestBody Requests.Login r) {
+        return service.login(r);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        try {
-            User user = userService.getUserById(id);
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    @GetMapping("/me")
+    public Views.User me() {
+        return service.me();
     }
 
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+    @PutMapping("/me")
+    public Views.User contact(@Valid @RequestBody Requests.Contact r) {
+        return service.contact(r);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        try {
-            User updated = userService.updateUser(id, userDetails);
-            return ResponseEntity.ok(updated);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout() {
+        service.logout();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    @GetMapping("/staff")
+    public List<Views.User> staff() {
+        return service.staff();
+    }
+
+    @PostMapping("/staff")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Views.User create(@Valid @RequestBody Requests.Staff r) {
+        return service.createStaff(r);
+    }
+
+    @PutMapping("/staff/{id}")
+    public Views.User access(@PathVariable Long id, @Valid @RequestBody Requests.StaffAccess r) {
+        return service.access(id, r);
+    }
+
+    @GetMapping("/delivery-workers")
+    public List<Views.User> workers() {
+        return service.workers();
     }
 }
