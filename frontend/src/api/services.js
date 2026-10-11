@@ -1,69 +1,155 @@
-import apiClient from './client';
-
-// Member 1 Services: Users & Orders
+import api from "./client";
+export const operationKey = () => {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+const post = (path, data, key) =>
+  api.post(path, data, {
+    headers: {
+      "Idempotency-Key": key,
+    },
+  });
 export const UserService = {
-    register: (data) => apiClient.post('/users/register', data),
-    login: (credentials) => apiClient.post('/users/login', credentials),
-    getAll: () => apiClient.get('/users'),
-    getById: (id) => apiClient.get(`/users/${id}`)
+  register: (data) => api.post("/users/register", data),
+  login: (data) => api.post("/users/login", data),
+  me: () => api.get("/users/me"),
+  logout: () => api.post("/users/logout"),
+  changePassword: (data, key) => post("/users/me/change-password", data, key),
+  updateProfile: (data) => api.put("/users/me", data),
+  getStaffMembers: () => api.get("/users/staff"),
+  createStaff: (data) => api.post("/users/staff", data),
+  updateStaff: (id, data) => api.put(`/users/staff/${id}`, data),
+  workers: () => api.get("/users/delivery-workers"),
 };
-
-export const OrderService = {
-    createOrder: (orderData) => apiClient.post('/orders', orderData),
-    getAllOrders: () => apiClient.get('/orders'),
-    getOrderById: (id) => apiClient.get(`/orders/${id}`),
-    getOrdersByCustomer: (customerId) => apiClient.get(`/orders/customer/${customerId}`),
-    updateStatus: (id, status) => apiClient.patch(`/orders/${id}/status?status=${status}`),
-    cancelOrder: (id) => apiClient.delete(`/orders/${id}`)
+export const CustomerService = {
+  getMyProfile: () => api.get("/customers/me"),
+  addAddress: (data) => api.post("/customers/me/addresses", data),
+  updateAddress: (id, data) => api.put(`/customers/me/addresses/${id}`, data),
+  deleteAddress: (id) => api.delete(`/customers/me/addresses/${id}`),
 };
-
-// Member 2 Services: Products & Inventory
 export const ProductService = {
-    getAllProducts: () => apiClient.get('/products'),
-    getProductById: (id) => apiClient.get(`/products/${id}`),
-    createProduct: (product) => apiClient.post('/products', product),
-    updateProduct: (id, product) => apiClient.put(`/products/${id}`, product),
-    getLowStock: () => apiClient.get('/products/low-stock')
+  uploadImage: (id, file, key) => {
+    const data = new FormData();
+    data.append("file", file);
+    return post(`/products/${id}/image`, data, key);
+  },
+  removeImage: (id, key) =>
+    api.delete(`/products/${id}/image`, {
+      headers: {
+        "Idempotency-Key": key,
+      },
+    }),
+  getAllProducts: () => api.get("/products"),
+  createProduct: (data) => api.post("/products", data),
+  updateProduct: (id, data) => api.put(`/products/${id}`, data),
 };
-
+export const OrderService = {
+  createOrder: (data, key) => post("/orders", data, key),
+  getAllOrders: (page = 0) =>
+    api.get("/orders", {
+      params: {
+        page,
+      },
+    }),
+  getOrderById: (id) => api.get(`/orders/${id}`),
+  cancelOrder: (id, key) => post(`/orders/${id}/cancel`, {}, key),
+  decision: (id, data, key) => post(`/orders/${id}/decision`, data, key),
+};
 export const InventoryService = {
-    getAllInventory: () => apiClient.get('/inventory/all'),
-    getStockByProduct: (productId) => apiClient.get(`/inventory/stock/${productId}`),
-    recordMovement: (movement) => apiClient.post('/inventory/movement', movement),
-    getMovementHistory: (productId) => apiClient.get(`/inventory/movements/${productId}`)
+  getAllInventory: () => api.get("/inventory"),
+  recordMovement: (data, key) => post("/inventory/movements", data, key),
+  threshold: (id, lowStockLevel) =>
+    api.put(`/inventory/${id}/threshold`, {
+      lowStockLevel,
+    }),
 };
-
-// Member 3 Services: Payments & Sales
 export const PaymentService = {
-    createPayment: (payment) => apiClient.post('/payments', payment),
-    getByOrderId: (orderId) => apiClient.get(`/payments/order/${orderId}`),
-    getUnverifiedTransfers: () => apiClient.get('/payments/unverified-transfers'),
-    getOutstandingCOD: () => apiClient.get('/payments/outstanding-cod'),
-    verifyPayment: (id) => apiClient.patch(`/payments/${id}/verify`),
-    completePayment: (id) => apiClient.patch(`/payments/${id}/complete`),
-    rejectPayment: (id) => apiClient.patch(`/payments/${id}/reject`)
+  byOrder: (id) => api.get(`/payments/order/${id}`),
+  queue: () => api.get("/payments/review-queue"),
+  upload: (id, file, key, onUploadProgress) => {
+    const data = new FormData();
+    data.append("file", file);
+    return api.post(`/payments/${id}/slip`, data, {
+      headers: {
+        "Idempotency-Key": key,
+      },
+      onUploadProgress,
+    });
+  },
+  slip: (id) =>
+    api.get(`/payments/${id}/slip`, {
+      responseType: "blob",
+    }),
+  review: (id, data, key) => post(`/payments/${id}/review`, data, key),
+  reconcile: (id, reason, key) =>
+    post(
+      `/payments/${id}/reconciliation`,
+      {
+        reason,
+      },
+      key,
+    ),
+  history: (id) => api.get(`/payments/${id}/history`),
 };
-
 export const SaleService = {
-    recordSale: (sale) => apiClient.post('/sales', sale),
-    getAllSales: () => apiClient.get('/sales'),
-    getByReceiptNo: (receiptNo) => apiClient.get(`/sales/receipt/${receiptNo}`)
+  quote: (data) => api.post("/sales/walk-in/quote", data),
+  recordWalkInSale: (data, key) => post("/sales/walk-in", data, key),
+  pickup: (id, data, key) => post(`/sales/pickup/${id}`, data, key),
 };
-
-// Member 4 Services: Deliveries & Reports
 export const DeliveryService = {
-    getAllDeliveries: () => apiClient.get('/deliveries'),
-    getById: (id) => apiClient.get(`/deliveries/${id}`),
-    getByOrderId: (orderId) => apiClient.get(`/deliveries/order/${orderId}`),
-    getOpenAssignments: () => apiClient.get('/deliveries/open-assignments'),
-    assignStaff: (id, staffId) => apiClient.patch(`/deliveries/${id}/assign?staffId=${staffId}`),
-    dispatch: (id) => apiClient.patch(`/deliveries/${id}/dispatch`),
-    complete: (id) => apiClient.patch(`/deliveries/${id}/complete`),
-    fail: (id) => apiClient.patch(`/deliveries/${id}/fail`)
+  getAllDeliveries: () => api.get("/deliveries"),
+  assignStaff: (id, staffId, reason, key) =>
+    post(
+      `/deliveries/${id}/assign`,
+      {
+        staffId,
+        reason,
+      },
+      key,
+    ),
+  dispatch: (id, key) => post(`/deliveries/${id}/dispatch`, {}, key),
+  complete: (id, data, key) => post(`/deliveries/${id}/complete`, data, key),
+  fail: (id, reason, key) =>
+    post(
+      `/deliveries/${id}/fail`,
+      {
+        reason,
+      },
+      key,
+    ),
+  payment: (id) => api.get(`/deliveries/${id}/payment`),
 };
-
+export const DeliveryZoneService = {
+  getActiveZones: () => api.get("/delivery-zones"),
+  save: (id, data, key) =>
+    id
+      ? api.put(`/delivery-zones/${id}`, data, {
+          headers: {
+            "Idempotency-Key": key,
+          },
+        })
+      : post("/delivery-zones", data, key),
+};
 export const ReportService = {
-    getDailySales: (dateStr) => apiClient.get(`/reports/daily-sales?date=${dateStr}`),
-    getDeliveryStatus: () => apiClient.get('/reports/delivery-status'),
-    getDeliveryPerformance: () => apiClient.get('/reports/delivery-performance')
+  sales: (start, end) =>
+    api.get("/reports/sales", {
+      params: {
+        start,
+        end,
+      },
+    }),
+};
+export const DriverService = {
+  update: (id, data, key) =>
+    api.put(`/drivers/${id}/coverage`, data, {
+      headers: {
+        "Idempotency-Key": key,
+      },
+    }),
 };
