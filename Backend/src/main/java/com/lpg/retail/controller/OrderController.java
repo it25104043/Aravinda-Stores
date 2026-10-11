@@ -48,7 +48,7 @@ public class OrderController {
 
     @PostMapping("/{id}/decision")
     public Views.Order decision(@PathVariable Long id, @Valid @RequestBody Requests.Decision r,
-                                @RequestHeader("Idempotency-Key") String key) {
+            @RequestHeader("Idempotency-Key") String key) {
         return service.decision(id, r, key);
     }
 }
