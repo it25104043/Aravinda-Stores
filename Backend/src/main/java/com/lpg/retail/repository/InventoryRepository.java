@@ -9,5 +9,10 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     Optional<Inventory> findByProductProductId(Long productId);
+
     List<Inventory> findByFullQtyLessThan(Integer quantity);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select i from Inventory i where i.product.productId = :id")
+    Optional<Inventory> lockByProductId(@org.springframework.data.repository.query.Param("id") Long id);
 }

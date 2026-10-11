@@ -7,7 +7,11 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    boolean existsByImageKey(String imageKey);
+
     List<Product> findByActive(Boolean active);
+
     List<Product> findByBrand(String brand);
+
     Product findByBrandAndSizeKg(String brand, java.math.BigDecimal sizeKg);
 }
