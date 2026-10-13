@@ -1,0 +1,247 @@
+-- Create and select database
+CREATE DATABASE IF NOT EXISTS db2;
+USE db2;
+
+-- NEW EMPTY DATABASE ONLY. MySQL 8.0.16+ / 8.4.
+-- This intentionally fails when tables exist; it never drops or replaces existing tables.
+
+CREATE TABLE users (
+    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE,
+    phone VARCHAR(20) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('CUSTOMER','STORE_STAFF','DELIVERY_STAFF','OWNER') NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME(6) NOT NULL,
+    token_version BIGINT NOT NULL DEFAULT 0
+) ENGINE=InnoDB;
+
+CREATE TABLE customers (
+    customer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    loyalty_points VARCHAR(255),
+    newsletter BOOLEAN,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE customer_addresses (
+    address_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT NOT NULL,
+    address_line VARCHAR(250) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    delivery_zone VARCHAR(80) NOT NULL,
+    eligible BOOLEAN NOT NULL,
+    label VARCHAR(255),
+    archived BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE delivery_zones (
+    zone_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    zone_name VARCHAR(255) NOT NULL UNIQUE,
+    delivery_fee DECIMAL(38,2) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT ck_zone_fee_nonnegative CHECK (delivery_fee >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE cylinder_products (
+    product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    brand VARCHAR(80) NOT NULL,
+    size_kg DECIMAL(38,2) NOT NULL,
+    exchange_price DECIMAL(10,2) NOT NULL,
+    new_price DECIMAL(10,2) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    image_key VARCHAR(36) NULL,
+    image_content_type VARCHAR(40) NULL,
+    UNIQUE (brand, size_kg),
+    CONSTRAINT uq_product_image_key UNIQUE (image_key),
+    CONSTRAINT ck_product_prices CHECK (size_kg > 0 AND exchange_price > 0 AND new_price > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE inventory_balances (
+    inventory_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL UNIQUE,
+    full_qty INT NOT NULL DEFAULT 0,
+    empty_qty INT NOT NULL DEFAULT 0,
+    low_stock_level INT NOT NULL DEFAULT 5,
+    reserved_qty INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (product_id) REFERENCES cylinder_products(product_id),
+    CONSTRAINT ck_stock_balance CHECK (full_qty >= 0 AND empty_qty >= 0 AND reserved_qty >= 0 AND reserved_qty <= full_qty AND low_stock_level >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE orders (
+    order_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT,
+    placed_by_user_id BIGINT,
+    address_id BIGINT,
+    delivery_zone_id BIGINT NULL,
+    delivery_zone_snapshot VARCHAR(255) NULL,
+    delivery_instructions VARCHAR(500) NULL,
+    channel ENUM('ONLINE','WALK_IN') NOT NULL,
+    fulfilment ENUM('PICKUP','DELIVERY') NOT NULL,
+    status ENUM('PENDING','CONFIRMED','DISPATCHED','COMPLETED','CANCELLED','FAILED','REJECTED') NOT NULL,
+    delivery_fee DECIMAL(10,2) NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL,
+    placed_at DATETIME(6) NOT NULL,
+    decision_reason VARCHAR(500),
+    address_snapshot VARCHAR(500),
+    contact_name VARCHAR(255),
+    contact_phone VARCHAR(255),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (placed_by_user_id) REFERENCES users(user_id),
+    FOREIGN KEY (address_id) REFERENCES customer_addresses(address_id),
+    FOREIGN KEY (delivery_zone_id) REFERENCES delivery_zones(zone_id),
+    CONSTRAINT ck_order_money CHECK (total_amount >= 0 AND delivery_fee >= 0),
+    CONSTRAINT chk_delivery_address_or_guest CHECK (
+        fulfilment <> 'DELIVERY' OR
+        (channel='ONLINE' AND customer_id IS NOT NULL AND address_id IS NOT NULL) OR
+        (channel='WALK_IN' AND customer_id IS NULL AND address_id IS NULL
+            AND delivery_zone_id IS NOT NULL AND delivery_zone_snapshot IS NOT NULL
+            AND CHAR_LENGTH(TRIM(delivery_zone_snapshot))>0
+            AND contact_name IS NOT NULL AND CHAR_LENGTH(TRIM(contact_name))>0
+            AND contact_phone IS NOT NULL AND CHAR_LENGTH(TRIM(contact_phone))>0
+            AND address_snapshot IS NOT NULL AND CHAR_LENGTH(TRIM(address_snapshot))>0)
+    ),
+    INDEX ix_order_status_date (status, placed_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE order_items (
+    order_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    purchase_type ENUM('EXCHANGE','NEW') NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    delivered_qty INT NOT NULL DEFAULT 0,
+    empty_collected INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES cylinder_products(product_id),
+    CONSTRAINT ck_order_item_quantities CHECK (quantity > 0 AND unit_price > 0 AND delivered_qty >= 0 AND delivered_qty <= quantity AND empty_collected >= 0 AND empty_collected <= delivered_qty)
+) ENGINE=InnoDB;
+
+CREATE TABLE payments (
+    payment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL UNIQUE,
+    method ENUM('CASH','COD','BANK_TRANSFER') NOT NULL,
+    status ENUM('PENDING','UNDER_REVIEW','VERIFIED','REJECTED','PAID') NOT NULL,
+    reconciliation_status ENUM('NONE','REQUIRED','RESOLVED') NOT NULL DEFAULT 'NONE',
+    reconciliation_reason VARCHAR(500) NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    collected_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    slip_path VARCHAR(255),
+    slip_key VARCHAR(36),
+    slip_type VARCHAR(255),
+    verified_by BIGINT,
+    verified_at DATETIME(6),
+    paid_at DATETIME(6),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (verified_by) REFERENCES users(user_id),
+    CONSTRAINT ck_payment_amount CHECK (amount >= 0 AND collected_amount >= 0 AND collected_amount <= amount),
+    INDEX ix_payment_method_status (method, status)
+) ENGINE=InnoDB;
+
+CREATE TABLE deliveries (
+    delivery_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL UNIQUE,
+    assigned_staff_id BIGINT,
+    status ENUM('UNASSIGNED','ASSIGNED','DISPATCHED','DELIVERED','FAILED') NOT NULL,
+    assigned_at DATETIME(6),
+    completed_at DATETIME(6),
+    cod_collected DECIMAL(38,2),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (assigned_staff_id) REFERENCES users(user_id),
+    CONSTRAINT ck_cod_nonnegative CHECK (cod_collected IS NULL OR cod_collected >= 0),
+    INDEX idx_driver_active_work (assigned_staff_id, status)
+) ENGINE=InnoDB;
+
+CREATE TABLE delivery_events (
+    event_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    delivery_id BIGINT NOT NULL,
+    actor_user_id BIGINT NOT NULL,
+    event_type ENUM('ASSIGNED','DISPATCHED','DELIVERED','FAILED','NOTE') NOT NULL,
+    event_at DATETIME(6) NOT NULL,
+    note VARCHAR(500),
+    FOREIGN KEY (delivery_id) REFERENCES deliveries(delivery_id),
+    FOREIGN KEY (actor_user_id) REFERENCES users(user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE sales (
+    sale_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL UNIQUE,
+    receipt_no VARCHAR(50) NOT NULL UNIQUE,
+    completed_by BIGINT NOT NULL,
+    sold_at DATETIME(6) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (completed_by) REFERENCES users(user_id),
+    INDEX ix_sales_date (sold_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE stock_movements (
+    movement_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    order_id BIGINT,
+    full_delta INT NOT NULL,
+    empty_delta INT NOT NULL,
+    reason ENUM('OPENING','RECEIPT','EXCHANGE_SALE','NEW_SALE','CORRECTION','RETURN') NOT NULL,
+    recorded_by BIGINT NOT NULL,
+    recorded_at DATETIME(6) NOT NULL,
+    note VARCHAR(500),
+    FOREIGN KEY (product_id) REFERENCES cylinder_products(product_id),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (recorded_by) REFERENCES users(user_id),
+    INDEX ix_movement_product_date (product_id, recorded_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE audit_events (
+    audit_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    actor_user_id BIGINT NOT NULL,
+    occurred_at DATETIME(6) NOT NULL,
+    action VARCHAR(60) NOT NULL,
+    resource_id BIGINT NOT NULL,
+    detail VARCHAR(2000) NOT NULL,
+    FOREIGN KEY (actor_user_id) REFERENCES users(user_id),
+    INDEX ix_audit_resource (action, resource_id, audit_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE request_keys (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    actor_id BIGINT NOT NULL,
+    request_key VARCHAR(80) NOT NULL,
+    operation VARCHAR(60) NOT NULL,
+    UNIQUE (actor_id, request_key),
+    FOREIGN KEY (actor_id) REFERENCES users(user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE schema_revisions (
+    revision VARCHAR(80) PRIMARY KEY,
+    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE driver_profiles (
+    driver_id BIGINT PRIMARY KEY,
+    available BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (driver_id) REFERENCES users(user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE driver_zones (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    driver_id BIGINT NOT NULL,
+    zone_id BIGINT NOT NULL,
+    CONSTRAINT uq_driver_zone UNIQUE(driver_id, zone_id),
+    FOREIGN KEY (driver_id) REFERENCES users(user_id),
+    FOREIGN KEY (zone_id) REFERENCES delivery_zones(zone_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE delivery_assignment_state (
+    id BIGINT PRIMARY KEY,
+    last_driver_id BIGINT NULL,
+    CONSTRAINT ck_single_assignment_state CHECK (id = 1)
+) ENGINE=InnoDB;
+
+CREATE TRIGGER audit_events_no_update BEFORE UPDATE ON audit_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit events are immutable';
+
+CREATE TRIGGER audit_events_no_delete BEFORE DELETE ON audit_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit events are immutable';
+
+INSERT INTO schema_revisions (revision) VALUES ('20261007_secure_workflows');
+INSERT INTO delivery_assignment_state (id, last_driver_id) VALUES (1, NULL);
