@@ -19,7 +19,7 @@
 
 /* Shared controls also cover workflow controls outside .form. */
 body {
-  font-family: "Segoe UI", Inter, Arial, sans-serif;
+  font-family: 'Segoe UI', Inter, Arial, sans-serif;
   line-height: 1.6;
   background: var(--bg);
   color: var(--dark);
@@ -29,7 +29,7 @@ h1,
 h2,
 h3 {
   line-height: 1.25;
-  letter-spacing: -0.025em;
+  letter-spacing: -.025em;
   overflow-wrap: anywhere;
 }
 
@@ -76,9 +76,7 @@ button {
   font-weight: 600;
   line-height: 1.4;
   cursor: pointer;
-  transition:
-    background-color 0.15s,
-    border-color 0.15s;
+  transition: background-color .15s, border-color .15s;
 }
 
 button:hover:not(:disabled) {
@@ -87,7 +85,7 @@ button:hover:not(:disabled) {
 }
 
 button:disabled {
-  opacity: 0.55;
+  opacity: .55;
   cursor: not-allowed;
 }
 
@@ -127,12 +125,12 @@ button:disabled {
 label {
   display: grid;
   gap: 8px;
-  font-size: 0.925rem;
+  font-size: .925rem;
   font-weight: 600;
   min-width: 0;
 }
 
-input:not([type="checkbox"]):not([type="radio"]),
+input:not([type='checkbox']):not([type='radio']),
 select,
 textarea {
   width: 100%;
@@ -160,8 +158,8 @@ textarea:disabled {
   cursor: not-allowed;
 }
 
-input[type="checkbox"],
-input[type="radio"] {
+input[type='checkbox'],
+input[type='radio'] {
   width: 18px;
   height: 18px;
   margin: 3px 0 0;
@@ -176,7 +174,7 @@ input[type="radio"] {
   font-weight: 400;
 }
 
-input[type="file"] {
+input[type='file'] {
   padding: 8px;
 }
 
@@ -241,14 +239,14 @@ hr {
   justify-content: center;
   flex-shrink: 0;
   min-height: 44px;
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
   text-align: left;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .navbar-brand-title {
-  color: #40566b;
+  color: #40566B;
   font-size: 22px;
   font-weight: 800;
   line-height: 1.1;
@@ -256,7 +254,7 @@ hr {
 
 .navbar-brand-subtitle {
   margin-top: 1px;
-  color: #142b42;
+  color: #142B42;
   font-size: 12px;
   font-weight: 800;
   line-height: 1.2;
@@ -283,18 +281,18 @@ hr {
   border-radius: 8px;
   background: transparent;
   color: #425362;
-  font-size: 0.9rem;
+  font-size: .9rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .navlinks a:hover,
-.navlinks a[aria-current="page"] {
+.navlinks a[aria-current='page'] {
   background: #edf4fb;
   color: var(--brand-hover);
 }
 
-.navlinks a[aria-current="page"] {
+.navlinks a[aria-current='page'] {
   border-color: #c4ddf5;
 }
 
@@ -303,7 +301,7 @@ hr {
   padding: 70px 7%;
   background: linear-gradient(110deg, #fff 0%, #fff 58%, #eef7ff 100%);
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
   gap: 45px;
   align-items: center;
 }
@@ -349,7 +347,7 @@ hr {
   max-width: 700px;
   height: 300px;
   border-radius: 18px;
-  background: #fff url("./heroImage.jpg") center / contain no-repeat;
+  background: #fff url('./heroImage.jpg') center / contain no-repeat;
 }
 
 .view.active {
@@ -428,7 +426,7 @@ hr {
   margin-block: 20px;
 }
 
-.panel > :last-child {
+.panel> :last-child {
   margin-bottom: 0;
 }
 
@@ -437,7 +435,7 @@ hr {
   background: #f8fafc;
 }
 
-article.panel > h2 {
+article.panel>h2 {
   font-size: 1.35rem;
 }
 
@@ -447,7 +445,7 @@ article.panel > h2 {
   gap: 20px;
 }
 
-.products > .card {
+.products>.card {
   display: flex;
   flex-direction: column;
 }
@@ -581,7 +579,7 @@ article.panel > h2 {
 }
 
 .type-title {
-  font-size: 0.78rem;
+  font-size: .78rem;
   font-weight: 600;
   color: #475569;
 }
@@ -591,7 +589,7 @@ article.panel > h2 {
 }
 
 .type-price {
-  font-size: 0.82rem;
+  font-size: .82rem;
   font-weight: 700;
   margin-top: 2px;
 }
@@ -625,17 +623,17 @@ article.panel > h2 {
   gap: 18px;
 }
 
-.form > p,
-.form > h2,
-.form > h3 {
+.form>p,
+.form>h2,
+.form>h3 {
   margin-bottom: 0;
 }
 
-.form > button {
+.form>button {
   justify-self: start;
 }
 
-.auth-page .form > button {
+.auth-page .form>button {
   width: 100%;
 }
 
@@ -647,11 +645,11 @@ article.panel > h2 {
   margin-block: 20px;
 }
 
-.form-inline > label {
+.form-inline>label {
   flex: 1 1 200px;
 }
 
-.form-inline > button {
+.form-inline>button {
   flex: 0 0 auto;
 }
 
@@ -662,7 +660,7 @@ article.panel > h2 {
   align-items: center;
 }
 
-.action-group > label {
+.action-group>label {
   flex: 1 1 260px;
 }
 
@@ -671,13 +669,13 @@ article.panel > h2 {
   max-width: 420px;
 }
 
-.panel > .form {
+.panel>.form {
   margin-top: 20px;
 }
 
-.panel > button + button,
-.adminmain > button + button,
-.workflow-page > button + button {
+.panel>button+button,
+.adminmain>button+button,
+.workflow-page>button+button {
   margin-inline-start: 10px;
 }
 
@@ -710,11 +708,11 @@ article.panel > h2 {
 .table th {
   background: #edf2f7;
   color: #425362;
-  font-size: 0.8rem;
+  font-size: .8rem;
 }
 
 .table td {
-  font-size: 0.9rem;
+  font-size: .9rem;
 }
 
 .table tbody tr:last-child td {
@@ -728,7 +726,7 @@ article.panel > h2 {
 .table td strong {
   display: block;
   color: var(--orange);
-  font-size: 0.8rem;
+  font-size: .8rem;
 }
 
 details {
@@ -872,7 +870,7 @@ details p {
 }
 
 .cart-item-price {
-  font-size: 0.82rem;
+  font-size: .82rem;
   margin-top: 4px;
 }
 
@@ -917,7 +915,7 @@ footer p {
 
 .footer-credit {
   margin-top: 15px;
-  font-size: 0.85em;
+  font-size: .85em;
   color: #b7c4cf;
 }
 
@@ -1095,7 +1093,7 @@ footer p {
   justify-items: center;
   gap: 8px;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: .85rem;
   text-align: center;
   padding: 8px;
 }
@@ -1153,7 +1151,7 @@ footer p {
 }
 
 .activity-timeline li:not(:last-child)::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 17px;
   top: 34px;
@@ -1180,7 +1178,7 @@ footer p {
 
 .activity-timeline p {
   margin: 0 0 6px;
-  font-size: 0.9rem;
+  font-size: .9rem;
 }
 
 .data-table {
@@ -1276,7 +1274,7 @@ caption {
 }
 
 .kpi h2 {
-  font-size: 0.9rem;
+  font-size: .9rem;
   color: var(--muted);
   margin-bottom: 12px;
 }
@@ -1312,13 +1310,14 @@ caption {
   fill: var(--brand);
 }
 
-@media (max-width: 900px) {
+@media (max-width:900px) {
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width:600px) {
+
   .profile-grid,
   .chart-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1379,7 +1378,7 @@ caption {
 }
 
 .card-heading small {
-  font-size: 0.65em;
+  font-size: .65em;
   color: var(--muted);
 }
 
@@ -1389,7 +1388,7 @@ caption {
   border-radius: 20px;
   background: var(--brand-soft);
   color: var(--brand);
-  font-size: 0.8rem;
+  font-size: .8rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -1412,7 +1411,7 @@ caption {
 .order-facts strong {
   display: block;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: .8rem;
   margin-bottom: 5px;
 }
 
@@ -1533,12 +1532,12 @@ caption {
     align-items: stretch;
   }
 
-  .form-inline > label,
-  .form-inline > button {
+  .form-inline>label,
+  .form-inline>button {
     flex-basis: auto;
   }
 
-  .form > button {
+  .form>button {
     justify-self: stretch;
   }
 
@@ -1555,6 +1554,7 @@ caption {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1643,7 +1643,7 @@ footer a:focus-visible {
   margin-bottom: 28px;
 }
 
-.profile-overview > div {
+.profile-overview>div {
   flex: 1;
   min-width: 0;
 }
@@ -1707,7 +1707,7 @@ footer a:focus-visible {
 
 .order-meta dt {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: .9rem;
 }
 
 .customer-orders,
@@ -1807,7 +1807,7 @@ footer a:focus-visible {
   flex: 1;
 }
 
-@media (max-width: 900px) {
+@media (max-width:900px) {
   .profile-dashboard {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1826,7 +1826,7 @@ footer a:focus-visible {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width:600px) {
   .profile-overview {
     flex-wrap: wrap;
     gap: 16px;
@@ -1839,7 +1839,7 @@ footer a:focus-visible {
     font-size: 1.5rem;
   }
 
-  .profile-overview > button {
+  .profile-overview>button {
     width: 100%;
   }
 
@@ -1855,7 +1855,7 @@ footer a:focus-visible {
     padding: 18px;
   }
 
-  .dialog-actions > button {
+  .dialog-actions>button {
     flex: 1;
   }
 
@@ -1865,57 +1865,13 @@ footer a:focus-visible {
 }
 
 /* Customer product controls and login prompt. */
-.navigation-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 10px 18px;
-  margin-bottom: 24px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: white;
-  color: var(--brand);
-  font-weight: 600;
-  text-decoration: none;
-}
-.navigation-back:hover {
-  background: var(--brand-soft);
-}
-.product-card {
-  display: flex;
-  flex-direction: column;
-}
-.product-card .rev:hover {
-  color: var(--brand);
-}
-.cart-login-prompt {
-  max-width: 440px;
-  margin: 0 auto;
-  text-align: center;
-  padding: 12px 0;
-}
-.login-prompt-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  color: var(--brand);
-  background: var(--brand-soft);
-  font-size: 2rem;
-  margin-bottom: 16px;
-}
-.cart-login-prompt .dialog-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-.cart-login-prompt .dialog-actions button {
-  min-width: 110px;
-}
+.navigation-back { display:inline-flex; align-items:center; gap:10px; min-height:44px; padding:10px 18px; margin-bottom:24px; border:1px solid var(--border); border-radius:10px; background:white; color:var(--brand); font-weight:600; text-decoration:none; }
+.navigation-back:hover { background:var(--brand-soft); }
+.product-card { display:flex; flex-direction:column; }
+.product-card .rev:hover { color:var(--brand); }
+.cart-login-prompt { max-width:440px; margin:0 auto; text-align:center; padding:12px 0; }
+.login-prompt-icon { display:inline-grid; place-items:center; width:64px; height:64px; border-radius:50%; color:var(--brand); background:var(--brand-soft); font-size:2rem; margin-bottom:16px; }
+.cart-login-prompt .dialog-actions { display:flex; justify-content:center; gap:12px; margin-top:24px; }
+.cart-login-prompt .dialog-actions button { min-width:110px; }
 
-.cart-login-modal {
-  width: min(520px, 100%);
-}
+.cart-login-modal { width: min(520px, 100%); }
